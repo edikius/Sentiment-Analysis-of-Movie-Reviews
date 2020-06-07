@@ -5,6 +5,36 @@ class imdb {
     this.host = "imdb8.p.rapidapi.com"
     this.key = "df1bd4f8f6mshbc9ebd452d6db37p1addcejsn6041f85b47ba"
   }
+
+  findMoviePlots(id, cb) {
+    var req = unirest("GET", "https://imdb8.p.rapidapi.com/title/get-plots");
+
+    req.query({
+    	"tconst": id
+    });
+    req.headers({
+      "x-rapidapi-host": this.host,
+    	"x-rapidapi-key": this.key,
+    	"useQueryString": true
+    });
+    req.end((res)=>{
+      	if (res.error) throw new Error(res.error);
+        console.log(res.body);
+        try{
+          var data = {
+            title: res.body.base.title,
+            image: res.body.base.image.url,
+            titleType: res.body.base.titleType,
+            year: res.body.base.year,
+            plots: [res.body.plots[0]]
+          }
+          cb(data)
+        } catch(e){
+          cb(false)
+        }
+      });
+  }
+
   async validateMovies(item){
     var data = new Array()
     for (var i = 0; i < item.length; i++) {

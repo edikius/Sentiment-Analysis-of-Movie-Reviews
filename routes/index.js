@@ -21,36 +21,32 @@ router.get('/search', async function(req, res, next) {
 
 router.get('/analyze/title/:id',  async (req, res, next) => {
   var id = req.params.id;
-
-  imdb.getReviews(id)
-  .then(async (data) => {
-    //console.log(data)
-      var object = []
-      for (let item of data) {
-        await google.analyzeReview(item.reviewText)
-        .then((result) => {
-          if (!result) return res.status(500);
-          object.push({imdb: item, google: result})
-          console.log('test')
-        })
-      }
-      console.log('done')
-        console.log(object.length)
-        res.render('analyze', {items: object});
-  })
+  imdb.findMoviePlots(id, (result)=>{
+    console.log(result);
+    result.id = id
+    res.render('analyze', result);
+ })
 });
 
+// router.get('/analyze/title/:id',  async (req, res, next) => {
+//   var id = req.params.id;
+//
+//   imdb.getReviews(id)
+//   .then(async (data) => {
+//     //console.log(data)
+//       var object = []
+//       for (let item of data) {
+//         await google.analyzeReview(item.reviewText)
+//         .then((result) => {
+//           if (!result) return res.status(500);
+//           object.push({imdb: item, google: result})
+//           console.log('test')
+//         })
+//       }
+//       console.log('done')
+//         console.log(object.length)
+//         res.render('analyze', {items: object});
+//   })
+// });
+
 module.exports = router;
-
-
-//
-//
-// this.view.suggest = {}
-//
-// for (let videos of result.items) {
-// 	videos.avatar = videos.avatar ? ('/img/avatar-small/' + videos.avatar) : '/assets/brand/avatar/smile.png'
-// 	videos.quality = Quality_meter(videos.bucket)
-// 	videos.duration =  Math.ceil(videos.duration / 60)
-// }
-//
-// this.view.suggest = result.items

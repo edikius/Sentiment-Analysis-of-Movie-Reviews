@@ -1,16 +1,112 @@
+<script src="/socket.io/socket.io.js"></script>
 <script type="text/javascript">
-  $(document).ready();
+  $(document).ready(function(){
+    const socket = io();
+    const id = $('#IdTitle').val()
+    var reviews_amount = 0
+    var avgScore = 0;
+    var scores = new Array()
+    var stats = {
+      positive: 0,
+      neutral: 0,
+      negative: 0
+    }
+    socket.emit("analyzeMovie", {id: id})
+    socket.on("newReview", (data)=>{
+      var score = data.google.score;
+      if(score > 0) updateStats("positive", ++stats.positive)
+      if(score == 0) updateStats("neutral", ++stats.neutral)
+      if(score < 0) updateStats("negative", ++stats.negative)
+      scores.push(score)
+      $("#reviewsAmount").text(++reviews_amount)
+      $(".reviewList").prepend(generateReviewElement(data))
+      $("#reviewsAVG").text(normalizeResult(getAvg(scores))+"%")
+    })
+
+  });
+
+  function prepareDescripction(text){
+    if(text.length > 400){
+      var visible = text.slice(0, 400)
+      var invisible = text.slice(401, text.length)
+      text = "<span class='visible'>" + visible + " see more...</span><span class='invisible'>" + invisible + " see more...</span>"
+    }
+    return text
+  }
+  function updateStats(type, amount){
+    $("#"+type+"Vote").text(amount)
+  }
+  function normalizeResult(result){
+    return (result * 100).toFixed(2);
+  }
+  function getAvg(scores) {
+    var result = 0;
+    for (var i = 0; i < scores.length; i++) {
+      result += scores[i]
+    }
+    return result / scores.length;
+  }
+  function generateReviewElement(data){
+    var top = '<div class="row reviewElement"><div class="col-8"><h4>'+ data.imdb.reviewTitle +'</h4>' + prepareDescripction(data.imdb.reviewText) + '</div>'
+    var votes = '<div class="col-2">' + data.imdb.interestingVotes.up +'  UP <br>' + data.imdb.interestingVotes.down +'  DOWN</div>'
+    var score = '<div class="col-2">'+ normalizeResult(data.google.score) +'%</div></div>'
+    return top + votes + score
+  }
 </script>
 
-
 <div class="container">
-
-
-
-  <hr>
-
-  {{#each items}}
-  ss 
-   {{imdb.reviewTitle}}, {{google.score}}, <br>
- {{/each}}
+  <input value="{{id}}" type="hidden" id="IdTitle">
+  <div class="row shadow-lg" style="margin: 10px">
+    <div class="col" style="padding-left: 0px;">
+      <img src="{{image}}" alt="" class="movieimg">
+    </div>
+    <div class="col-5">
+      <h1>{{title}} ({{year}})</h1> <hr>
+      {{#each plots}}
+          <div class="description" plotnumber="{{@index}}">
+            {{this.text}} <hr>
+          </div>
+      {{/each}}
+    </div>
+    <div class="col calcResults">
+      <h3>Amount of Reviews</h3>
+      <h1 class="calcDesc" id="reviewsAmount">0</h1> <hr>
+      <h3>AVG Sentimental Score</h3>
+      <h1 class="calcDesc" id="reviewsAVG">0%</h1><hr>
+      <h3>Stats</h3>
+      <div class="row shadow-lg">
+        <div class="col">
+          Positive <br>
+          <span id="positiveVote">0</span>
+        </div>
+        <div class="col">
+          Neutral <br>
+          <span id="neutralVote">0</span>
+        </div>
+        <div class="col">
+          Negative <br>
+          <span id="negativeVote">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="reviewsData shadow-lg">
+    <div class="row headerReviews">
+      <div class="col-8">
+        Description
+      </div>
+      <div class="col-2">Votes</div>
+      <div class="col-2">Score</div>
+    </div>
+    <div class="reviewList">
+      <!-- <div class="row reviewElement">
+        <div class="col-8">
+          <h4>Title of it</h4>
+          Set in and around the corridors of power, Bodyguard tells the fictional story of David Budd, a heroic but volatile war veteran now working as a Specialist Protection Officer for the Royalty and Specialist Protection Branch (RaSP) of London's Metropolitan Police Service. When he is assigned to protect the ambitious and powerful Home Secretary Julia Montague, whose politics stand for everything he despises, Budd finds himself torn between his duty and his beliefs.
+        </div>
+        <div class="col-2">UP 120 <hr> DOWN 52</div>
+        <div class="col-2">0.40303</div>
+      </div> -->
+    </div>
+  </div>
 </div>
